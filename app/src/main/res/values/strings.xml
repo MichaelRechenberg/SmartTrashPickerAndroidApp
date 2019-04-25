@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">SmartTrashPickerApp</string>
+    <string name="home_screen_welcome_text_top">Hello!</string>
+    <string name="home_screen_welcome_text_bottom">Ready to pick up some trash?</string>
+    <string name="enter_username_hint_text">Enter Username</string>
+    <string name="welcome_screen_login_button_text">Pair With Picker</string>
+</resources>
