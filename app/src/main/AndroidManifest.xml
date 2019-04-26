@@ -11,7 +11,7 @@
             android:theme="@style/AppTheme">
         <activity android:name=".BLEPairingActivity">
         </activity>
-        <activity android:name=".HomeActivity">
+        <activity android:name=".HomeActivity" android:launchMode="singleInstance">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 
