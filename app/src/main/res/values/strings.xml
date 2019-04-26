@@ -1,7 +1,14 @@
 <resources>
     <string name="app_name">SmartTrashPickerApp</string>
     <string name="home_screen_welcome_text_top">Hello!</string>
-    <string name="home_screen_welcome_text_bottom">Ready to pick up some trash?</string>
+    <string name="home_screen_welcome_text_bottom">Let\'s clean up the neighborhood</string>
     <string name="enter_username_hint_text">Enter Username</string>
     <string name="welcome_screen_login_button_text">Pair With Picker</string>
+    <string name="home_screen_username_header_text">Who will be using the trash picker?</string>
+    <string name="ble_pairing_header_text">Pairing With A Picker</string>
+    <string name="ble_start_scan_text_actively_scanning">Scanning for Bluetooth devices...</string>
+    <string name="ble_start_scan_text_not_scanning">Scan Finished. Click to scan again</string>
+    <string name="ble_uiud_default_text">NO UIUD FOUND</string>
+    <string name="blue_address_default_text">NO BLUETOOTH ADDRESS FOUND</string>
+    <string name="ble_discovered_devices_header_text">Select your picker from the devices below</string>
 </resources>

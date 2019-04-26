@@ -35,6 +35,15 @@
             android:layout_height="wrap_content" android:id="@+id/LoginConstraintLayout"
             android:layout_marginBottom="32dp" app:layout_constraintBottom_toBottomOf="parent">
 
+        <TextView
+                android:text="@string/home_screen_username_header_text"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content" android:id="@+id/welcome_screen_username_header_textview"
+                app:layout_constraintEnd_toEndOf="@+id/welcome_screen_username_edittext"
+                android:layout_marginEnd="8dp"
+                app:layout_constraintBottom_toTopOf="@+id/welcome_screen_username_edittext"
+                app:layout_constraintStart_toStartOf="parent" android:layout_marginStart="8dp"
+                android:layout_marginBottom="16dp" android:textAppearance="@style/TextAppearance.AppCompat.Large"/>
         <EditText
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -43,7 +52,7 @@
                 android:id="@+id/welcome_screen_username_edittext" android:layout_marginEnd="8dp"
                 app:layout_constraintEnd_toEndOf="parent" android:layout_marginStart="8dp"
                 app:layout_constraintStart_toStartOf="parent" android:hint="@string/enter_username_hint_text"
-                app:layout_constraintHorizontal_bias="0.0" android:layout_marginBottom="40dp"
+                app:layout_constraintHorizontal_bias="0.0" android:layout_marginBottom="64dp"
                 app:layout_constraintBottom_toTopOf="@+id/welcome_screen_login_button"/>
         <Button
                 android:layout_width="0dp"
