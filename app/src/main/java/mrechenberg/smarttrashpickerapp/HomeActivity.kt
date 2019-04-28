@@ -1,14 +1,21 @@
 package mrechenberg.smarttrashpickerapp
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
+import android.support.v4.app.ActivityCompat
 import android.support.v7.app.AppCompatActivity
 import android.text.Editable
 import android.text.TextWatcher
+import android.util.Log
 import android.widget.Toast
 import kotlinx.android.synthetic.main.activity_home.*
 
 class HomeActivity : AppCompatActivity() {
+
+
+    private val MY_REQUEST_LOCATION_PERMISSIONS = 1
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,5 +60,38 @@ class HomeActivity : AppCompatActivity() {
         }
 
 
+        // We need to request permission to use location (coarse and fine)
+        ActivityCompat.requestPermissions(
+            this@HomeActivity,
+            arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION),
+            MY_REQUEST_LOCATION_PERMISSIONS
+        )
+
+
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+        when (requestCode){
+            MY_REQUEST_LOCATION_PERMISSIONS -> {
+                val allLocationPermissionsGranted = grantResults.all { gr -> gr == PackageManager.PERMISSION_GRANTED}
+
+                if (allLocationPermissionsGranted){
+                    Log.d("REE", "All location permissions granted :)")
+
+                }
+                else{
+                    Log.e("REE", "Not all location permissions were granted")
+                    val toastMessage = "This app requires location permissions to operate.  Please restart " +
+                            "the app and enable location access if you want to use this app"
+                    var t = Toast.makeText(this@HomeActivity, toastMessage, Toast.LENGTH_LONG)
+                    t.show()
+                }
+            }
+            else -> {
+                // silently ignore other permission requests
+            }
+        }
     }
 }
