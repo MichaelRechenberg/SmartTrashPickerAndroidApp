@@ -2,14 +2,14 @@ package mrechenberg.smarttrashpickerapp
 
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
+import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
-import android.bluetooth.le.BluetoothLeScanner
-import android.bluetooth.le.ScanCallback
-import android.bluetooth.le.ScanResult
+import android.bluetooth.le.*
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
+import android.os.ParcelUuid
 import android.support.v7.app.AppCompatActivity
 import android.support.v7.widget.LinearLayoutManager
 import android.util.Log
@@ -22,7 +22,10 @@ class BLEPairingActivity : AppCompatActivity() {
     val REQUEST_ENABLE_BT = 1
 
     // Number of ms to use for a scanning period
-    val SCAN_PERIOD : Long = 10000
+    val SCAN_PERIOD : Long = 10 * 1000
+
+    // Bluetooth Service UIUD for smart trash picker service
+    val SMART_TRASH_PICKER_SERVICE_UIUD_STR = "00001337-0000-1000-8000-00805f9b34fb"
 
     // Flag indicating if we are currently scanning for Bluetooth devices
     var isActivelyScanning = false
@@ -31,6 +34,9 @@ class BLEPairingActivity : AppCompatActivity() {
 
 
     var bleScanCallback : ScanCallback? = null
+
+    val setOfDiscoveredDeviceAddresses : HashSet<String> = hashSetOf()
+    val listOfDiscoveredBLEDevices : MutableList<BLEDiscoveredDevice> = mutableListOf()
 
 
     /**
@@ -45,25 +51,7 @@ class BLEPairingActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_blepairing)
 
-        bleScanCallback = object : ScanCallback() {
-            override fun onScanResult(callbackType: Int, result: ScanResult?) {
-                super.onScanResult(callbackType, result)
 
-
-                // I don't think we need any more information from the ScanResult besides the
-                //    BluetoothDevice
-                var foundBLEDevice = result?.device
-
-                var toastMessage = "Found BLE device with address $foundBLEDevice.address"
-
-                Log.d("REE", toastMessage)
-
-                // TODO: use this BLE device to feed into the Adapter for RecyclerView of
-                //    BLE devices
-
-
-            }
-        }
 
         // Request that the user enable Bluetooth, if it isn't turned on already
         bluetoothAdapter?.takeIf { !it.isEnabled }?.apply {
@@ -71,19 +59,80 @@ class BLEPairingActivity : AppCompatActivity() {
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT)
         }
 
-        // Initialize BLE scanner
-        bleScanner = bluetoothAdapter?.bluetoothLeScanner
-
-        scanForBLEDevices(SCAN_PERIOD)
 
 
 
 
-        // Init recycler view
+        // Init recycler view and its adapter
         var discoveredDevicesRecyclerView = ble_discovered_devices_recyclerview
         discoveredDevicesRecyclerView.layoutManager = LinearLayoutManager(this@BLEPairingActivity)
 
-        // TODO: set adapter of recycler view based on the results of BLE scan
+        var discoveredDevicesAdapter = BLEDiscoveredDeviceListAdapter(
+            this@BLEPairingActivity,
+            listOfDiscoveredBLEDevices
+        )
+        discoveredDevicesRecyclerView.adapter = discoveredDevicesAdapter
+
+
+        // Initialize the BLE ScanCallback we will use on each BLE Scan
+        // This callback updates the list of discovered bluetooth devices and has a
+        //    closure on the recycler view's adapter (so it can notify when the
+        //    dataset has changed)
+        bleScanCallback = object : ScanCallback() {
+
+
+            override fun onScanResult(callbackType: Int, result: ScanResult?) {
+                super.onScanResult(callbackType, result)
+
+
+                // I don't think we need any more information from the ScanResult besides the
+                //    BluetoothDevice
+                var foundBLEDevice = result!!.device
+
+                var foundBLEAddress = foundBLEDevice?.address
+
+                if (foundBLEAddress != null && !setOfDiscoveredDeviceAddresses.contains(foundBLEAddress)){
+                    // We haven't seen this device before, so add it to our list of discovered
+                    //   devices and use the RecyclerView adapter to notify that we've added
+                    //   a new device to the list
+
+                    setOfDiscoveredDeviceAddresses.add(foundBLEAddress)
+                    var logMessage = "Found BLE device with address $foundBLEDevice.address"
+                    Log.d("REE", logMessage)
+
+
+                    val bleDeviceForView = BLEDiscoveredDevice(foundBLEDevice)
+                    listOfDiscoveredBLEDevices.add(bleDeviceForView)
+
+                    discoveredDevicesAdapter.notifyDataSetChanged()
+
+                }
+
+            }
+        }
+
+
+        // Initialize BLE scanner
+        bleScanner = bluetoothAdapter?.bluetoothLeScanner
+
+
+        // Scan filter for Bluetooth devices that advertise the
+        //    Smart Trash Picker UIUD
+        var filterForTrashPickerServiceUIUD = ScanFilter.Builder()
+            .setServiceUuid(ParcelUuid.fromString(SMART_TRASH_PICKER_SERVICE_UIUD_STR))
+            .build()
+
+        var scanFilters = listOf(
+            filterForTrashPickerServiceUIUD
+        )
+
+        // Start scanning for BLE devices (since we've initialized this.bleScanCallback
+        //   using the filters we've specified
+        scanForBLEDevices(SCAN_PERIOD, scanFilters)
+
+
+
+
 
         // Allow the user to rescan by clicking near the scan text
         var scanStatusLayout = ble_pairing_scan_control_layout
@@ -99,10 +148,14 @@ class BLEPairingActivity : AppCompatActivity() {
             else {
                 isActivelyScanning = !isActivelyScanning
                 scanStatusTextView.setText(R.string.ble_start_scan_text_actively_scanning)
-                scanForBLEDevices(SCAN_PERIOD)
+
+                // update Recycler view by clearing dataset, then scan for devices again
+                listOfDiscoveredBLEDevices.clear()
+                setOfDiscoveredDeviceAddresses.clear()
+                discoveredDevicesAdapter.notifyDataSetChanged()
+                scanForBLEDevices(SCAN_PERIOD, scanFilters)
 
 
-                // TODO: set adapter of recycler view based on the results of BLE scan
             }
         }
     }
@@ -125,13 +178,28 @@ class BLEPairingActivity : AppCompatActivity() {
         }
     }
 
-    // TODO: Use ScanFilters to filter BLE results to just those for smart trash picker
-    // TODO: I'll have to deal with duplicates
-    private fun scanForBLEDevices(scanDuration : Long){
+    /**
+     * Scan for bluetooth devices for a specified amount of time, scanning
+     *  for devices that satisfy a list of scan filters
+     *
+     *  this.bleScanCallback is invoked for every valid BLE advertisement
+     */
+    private fun scanForBLEDevices(scanDuration : Long, scanFilters : List<ScanFilter>){
 
 
         Log.d("REE", "Starting BLE scan")
-        bleScanner?.startScan(bleScanCallback)
+        // Clear any found BLE addresses and devices
+        setOfDiscoveredDeviceAddresses.clear()
+        listOfDiscoveredBLEDevices.clear()
+
+        var scanSettings = ScanSettings.Builder()
+            .build()
+
+        bleScanner?.startScan(
+            scanFilters,
+            scanSettings,
+            bleScanCallback
+        )
 
         // Stop the scan after scanDuration ms have elapsed
         var bleScanHandler = Handler()
