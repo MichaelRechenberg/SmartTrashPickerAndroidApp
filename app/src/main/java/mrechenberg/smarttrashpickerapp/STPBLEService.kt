@@ -16,6 +16,8 @@ import android.util.Log
 
 class STPBLEService : Service() {
 
+    // Have a handle to the BluetoothGatt so we can free resources
+    //    when this Service is destroyed
     var bluetoothGatt : BluetoothGatt? = null
 
     // ID for foreground notification
