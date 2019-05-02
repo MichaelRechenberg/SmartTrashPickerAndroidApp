@@ -12,9 +12,13 @@ import android.util.Log
 import android.widget.Toast
 import kotlinx.android.synthetic.main.activity_home.*
 
+/**
+ * Launcher activity for the app
+ */
 class HomeActivity : AppCompatActivity() {
 
 
+    // Used when requesting location permissions
     private val MY_REQUEST_LOCATION_PERMISSIONS = 1
 
 

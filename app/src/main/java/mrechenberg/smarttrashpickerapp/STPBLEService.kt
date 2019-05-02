@@ -14,6 +14,14 @@ import android.support.annotation.RequiresApi
 import android.support.v4.app.NotificationCompat
 import android.util.Log
 
+/**
+ * Foreground service that creates and maintains a BLE connection
+ *  with a device and acts upon indications sent to the app
+ *
+ * Consumers of this service need to pass in the BluetoothDevice
+ *  they want to connect to via a Parcelable Extra within the Intent
+ *  (under the key STPBLEService.STP_BLE_DEVICE_INTENT_KEY)
+ */
 class STPBLEService : Service() {
 
     // Have a handle to the BluetoothGatt so we can free resources
@@ -23,6 +31,7 @@ class STPBLEService : Service() {
     // ID for foreground notification
     val ONGOING_NOTIFICATION_ID = 1
 
+    // Identifiers for notification channels (for Oreo and upwards)
     val NOTIFICATION_CHANNEL_STR_ID = "stp-notification-channel"
     val NOTIFICATION_CHANNEL_NAME = "STP Notifications"
 
@@ -127,55 +136,55 @@ class STPBLEService : Service() {
         }
 
 
-            // Create notification so this service can run as a Foreground Service
+        // Create notification so this service can run as a Foreground Service
 
-            // Make notification channel if this is a newer phone
-            // https://stackoverflow.com/questions/47531742/startforeground-fail-after-upgrade-to-android-8-1/47634345
-            val channelId =
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
-                    createNotificationChannel()
-                    NOTIFICATION_CHANNEL_STR_ID
-                }
-                else {
-                    ""
-                }
+        // Make notification channel if this is a newer phone
+        // https://stackoverflow.com/questions/47531742/startforeground-fail-after-upgrade-to-android-8-1/47634345
+        val channelId =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+                createNotificationChannel()
+                NOTIFICATION_CHANNEL_STR_ID
+            }
+            else {
+                ""
+            }
 
-            val pendingIntent : PendingIntent =
-                Intent(this@STPBLEService, BLEConnActiveActivity::class.java).let {
-                        notificationIntent -> PendingIntent.getActivity(this@STPBLEService, 0, notificationIntent, 0)
-                }
+        val pendingIntent : PendingIntent =
+            Intent(this@STPBLEService, BLEConnActiveActivity::class.java).let {
+                    notificationIntent -> PendingIntent.getActivity(this@STPBLEService, 0, notificationIntent, 0)
+            }
 
-            val notification : Notification = NotificationCompat.Builder(this@STPBLEService, channelId)
-                .setContentTitle(getText(R.string.stp_ble_notification_content_title))
-                .setContentText("${getText(R.string.stp_ble_notification_content_text_prefix)} ${bleDevice?.address})")
-                .setSmallIcon(R.drawable.ic_launcher_foreground)
-                .setContentIntent(pendingIntent)
-                .build()
+        val notification : Notification = NotificationCompat.Builder(this@STPBLEService, channelId)
+            .setContentTitle(getText(R.string.stp_ble_notification_content_title))
+            .setContentText("${getText(R.string.stp_ble_notification_content_text_prefix)} ${bleDevice?.address})")
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentIntent(pendingIntent)
+            .build()
 
-            startForeground(ONGOING_NOTIFICATION_ID, notification)
-
-
-            return Service.START_STICKY
-        }
+        startForeground(ONGOING_NOTIFICATION_ID, notification)
 
 
-
-        // create a notification channel for devices supporting Oreo and higher with channel id NOTIFICATION_CHANNEL_STR_ID
-        @RequiresApi(Build.VERSION_CODES.O)
-        private fun createNotificationChannel() {
-            val channel = NotificationChannel(NOTIFICATION_CHANNEL_STR_ID, NOTIFICATION_CHANNEL_NAME, NotificationManager.IMPORTANCE_LOW)
-
-            channel.lightColor = Color.CYAN
-            channel.lockscreenVisibility = Notification.VISIBILITY_PUBLIC
-            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(channel)
-        }
-
-        override fun onDestroy() {
-            Log.d("REE", "onDestroy() called")
-            bluetoothGatt?.close()
-            bluetoothGatt?.disconnect()
-            bluetoothGatt = null
-        }
+        return Service.START_STICKY
     }
+
+
+
+    // create a notification channel for devices supporting Oreo and higher with channel id NOTIFICATION_CHANNEL_STR_ID
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun createNotificationChannel() {
+        val channel = NotificationChannel(NOTIFICATION_CHANNEL_STR_ID, NOTIFICATION_CHANNEL_NAME, NotificationManager.IMPORTANCE_LOW)
+
+        channel.lightColor = Color.CYAN
+        channel.lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(channel)
+    }
+
+    override fun onDestroy() {
+        Log.d("REE", "onDestroy() called")
+        bluetoothGatt?.close()
+        bluetoothGatt?.disconnect()
+        bluetoothGatt = null
+    }
+}
 

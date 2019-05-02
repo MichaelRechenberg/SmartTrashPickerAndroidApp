@@ -10,6 +10,9 @@ import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
 
+/**
+ * Adapter for displaying discovered Bluetooth devices on the pairing screen
+ */
 class BLEDiscoveredDeviceListAdapter(val mContext: Context, val mDiscoveredDevices: MutableList<BLEDiscoveredDevice>) :
     RecyclerView.Adapter<BLEDiscoveredDeviceListAdapter.BLEDiscoveredDeviceViewHolder>() {
 

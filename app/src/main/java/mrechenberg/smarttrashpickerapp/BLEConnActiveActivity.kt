@@ -7,6 +7,11 @@ import android.util.Log
 import android.widget.Toast
 import kotlinx.android.synthetic.main.activity_bleconn_active.*
 
+/**
+ * Activity to display while there is active BLE connection
+ *  with a trash picker.  The user can disconnect from
+ *  the trash picker from this activity
+ */
 class BLEConnActiveActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {

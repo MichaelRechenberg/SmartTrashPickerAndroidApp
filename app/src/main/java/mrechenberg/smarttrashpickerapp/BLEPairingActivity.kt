@@ -14,7 +14,14 @@ import android.support.v7.widget.LinearLayoutManager
 import android.util.Log
 import android.widget.Toast
 import kotlinx.android.synthetic.main.activity_blepairing.*
+import mrechenberg.smarttrashpickerapp.STPBLEService.Companion.SMART_TRASH_PICKER_SERVICE_UUID_STR
 
+/**
+ * Activity for choosing a trash picker to pair over bluetooth
+ *
+ * Scans and filters for bluetooth devices that advertise the UUID of
+ *    the "smart trash picker" service defined here https://github.com/MichaelRechenberg/Smart-Trash-Picker
+ */
 class BLEPairingActivity : AppCompatActivity() {
 
     // Flag for Bluetooth intent
@@ -23,17 +30,17 @@ class BLEPairingActivity : AppCompatActivity() {
     // Number of ms to use for a scanning period
     val SCAN_PERIOD : Long = 10 * 1000
 
-    // Bluetooth Service UUID for smart trash picker service
-    val SMART_TRASH_PICKER_SERVICE_UUID_STR = "00001337-0000-1000-8000-00805f9b34fb"
-
     // Flag indicating if we are currently scanning for Bluetooth devices
     var isActivelyScanning = false
 
+    // BLE scanner
     var bleScanner : BluetoothLeScanner? = null
 
-
+    // The ScanCallback to use once we connect to the GATT server
     var bleScanCallback : ScanCallback? = null
 
+    // Used to filter advertising packets from the same device and
+    //    keep track of discovered devices
     val setOfDiscoveredDeviceAddresses : HashSet<String> = hashSetOf()
     val listOfDiscoveredBLEDevices : MutableList<BLEDiscoveredDevice> = mutableListOf()
 
@@ -50,16 +57,11 @@ class BLEPairingActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_blepairing)
 
-
-
         // Request that the user enable Bluetooth, if it isn't turned on already
         bluetoothAdapter?.takeIf { !it.isEnabled }?.apply {
             val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
             startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT)
         }
-
-
-
 
 
         // Init recycler view and its adapter
@@ -116,7 +118,7 @@ class BLEPairingActivity : AppCompatActivity() {
 
 
         // Scan filter for Bluetooth devices that advertise the
-        //    Smart Trash Picker UIUD
+        //    Smart Trash Picker UUID
         var filterForTrashPickerServiceUIUD = ScanFilter.Builder()
             .setServiceUuid(ParcelUuid.fromString(SMART_TRASH_PICKER_SERVICE_UUID_STR))
             .build()
@@ -133,7 +135,7 @@ class BLEPairingActivity : AppCompatActivity() {
 
 
 
-        // Allow the user to rescan by clicking near the scan text
+        // Allow the user to cancel a scan and start a new scan by clicking the scan text
         var scanStatusLayout = ble_pairing_scan_control_layout
         var scanStatusTextView = ble_start_scan_textview
 
@@ -159,6 +161,9 @@ class BLEPairingActivity : AppCompatActivity() {
         }
     }
 
+    // Ensure Bluetooth is enabled.  If the user denies bluetooth access,
+    //    punt them back to the home activity and show a Toast message
+    //    explaining that Bluetooth permissions are required
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == REQUEST_ENABLE_BT && resultCode == Activity.RESULT_CANCELED){
             // The user refused to enable Bluetooth, or there was an error
@@ -211,9 +216,10 @@ class BLEPairingActivity : AppCompatActivity() {
         }, scanDuration)
     }
 
+    // Stop scanning for BLE devices
     private fun stopScanForBLEDevices(){
         Log.d("REE", "Stopping BLE scan")
-        // Note that to stop the scan, you need to use the SAME ScanCallback
+        // Note that to stop the scan, you need to use the SAME ScanCallback for stopScan()
         // See https://github.com/innoveit/react-native-ble-manager/issues/113
         bleScanner?.flushPendingScanResults(bleScanCallback)
         bleScanner?.stopScan(bleScanCallback)
