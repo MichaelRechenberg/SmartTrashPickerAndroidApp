@@ -1,7 +1,9 @@
 package mrechenberg.smarttrashpickerapp
 
 import android.content.Context
+import android.content.Intent
 import android.support.v7.widget.RecyclerView
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -44,16 +46,20 @@ class BLEDiscoveredDeviceListAdapter(val mContext: Context, val mDiscoveredDevic
         holder.bleAddressTextView.text = bleAddress
 
         // Create an on-click listener that will pair with this Bluetooth device when
-        //   the holder's view is clicked
+        //   the holder's view is clicked (in a foreground service)
+        //   and start an activity to monitor that connection
         holder.v.setOnClickListener { v ->
-            // TODO: actually do bluetooth pairing with a background service on click, using mContext
+
+            Log.d("REE", "Starting the STPBLEservice")
             var underlyingBLEDevice = mDiscoveredDevices[position].bleDevice
-            var addressToPairWith = underlyingBLEDevice.address
 
-            var t = Toast.makeText(v.context, "TODO: connect to $addressToPairWith", Toast.LENGTH_SHORT)
-            t.show()
+            var stpBleIntent = Intent(this.mContext, STPBLEService::class.java)
+            stpBleIntent.putExtra(STPBLEService.STP_BLE_DEVICE_INTENT_KEY, underlyingBLEDevice)
+            this.mContext.startService(stpBleIntent)
 
 
+            var bleConnActiveActivityIntent = Intent(this.mContext, BLEConnActiveActivity::class.java)
+            this.mContext.startActivity(bleConnActiveActivityIntent)
         }
     }
 

@@ -2,7 +2,6 @@ package mrechenberg.smarttrashpickerapp
 
 import android.app.Activity
 import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothManager
 import android.bluetooth.le.*
 import android.content.Context
@@ -24,8 +23,8 @@ class BLEPairingActivity : AppCompatActivity() {
     // Number of ms to use for a scanning period
     val SCAN_PERIOD : Long = 10 * 1000
 
-    // Bluetooth Service UIUD for smart trash picker service
-    val SMART_TRASH_PICKER_SERVICE_UIUD_STR = "00001337-0000-1000-8000-00805f9b34fb"
+    // Bluetooth Service UUID for smart trash picker service
+    val SMART_TRASH_PICKER_SERVICE_UUID_STR = "00001337-0000-1000-8000-00805f9b34fb"
 
     // Flag indicating if we are currently scanning for Bluetooth devices
     var isActivelyScanning = false
@@ -119,7 +118,7 @@ class BLEPairingActivity : AppCompatActivity() {
         // Scan filter for Bluetooth devices that advertise the
         //    Smart Trash Picker UIUD
         var filterForTrashPickerServiceUIUD = ScanFilter.Builder()
-            .setServiceUuid(ParcelUuid.fromString(SMART_TRASH_PICKER_SERVICE_UIUD_STR))
+            .setServiceUuid(ParcelUuid.fromString(SMART_TRASH_PICKER_SERVICE_UUID_STR))
             .build()
 
         var scanFilters = listOf(
