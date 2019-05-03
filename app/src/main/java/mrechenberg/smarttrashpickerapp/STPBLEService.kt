@@ -130,10 +130,12 @@ class STPBLEService : Service() {
                     }
 
                     BluetoothProfile.STATE_DISCONNECTED -> {
+                        // If the Bluetooth connection fails, then we should stop this service
+                        //   so the user can reconnect later
                         Log.d("REE", "Disconnected from GATT Server")
                         Log.d("REE", "Status $status")
-                        gatt?.close()
-                        bluetoothGatt = null
+
+                        stopSelf()
                     }
                 }
 
