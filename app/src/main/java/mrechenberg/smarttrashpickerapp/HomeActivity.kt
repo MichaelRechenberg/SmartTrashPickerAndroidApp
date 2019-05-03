@@ -1,7 +1,9 @@
 package mrechenberg.smarttrashpickerapp
 
 import android.Manifest
+import android.app.Activity
 import android.content.Intent
+import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.support.v4.app.ActivityCompat
@@ -10,6 +12,10 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
 import android.widget.Toast
+import com.google.android.gms.common.api.ResolvableApiException
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.location.LocationSettingsRequest
 import kotlinx.android.synthetic.main.activity_home.*
 
 /**
@@ -20,6 +26,9 @@ class HomeActivity : AppCompatActivity() {
 
     // Used when requesting location permissions
     private val MY_REQUEST_LOCATION_PERMISSIONS = 1
+
+    // Used when requesting location settings
+    private val MY_REQUEST_LOCATION_SETTINGS = 2
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,7 +73,9 @@ class HomeActivity : AppCompatActivity() {
         }
 
 
-        // We need to request permission to use location (coarse and fine)
+        // After we request location permissions, we will prompt the user to change location settings
+        //    (in onRequestPermissionsResult()) so we have high accuracy when getting the user's location
+        // See https://developer.android.com/training/location
         ActivityCompat.requestPermissions(
             this@HomeActivity,
             arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION),
@@ -82,7 +93,9 @@ class HomeActivity : AppCompatActivity() {
                 val allLocationPermissionsGranted = grantResults.all { gr -> gr == PackageManager.PERMISSION_GRANTED}
 
                 if (allLocationPermissionsGranted){
-                    Log.d("REE", "All location permissions granted :)")
+                    // Location permissions are granted, request high precision location settings
+                    Log.d("REE", "All location permissions are granted, now requesting high precision for location")
+                    requestLocationSettings()
 
                 }
                 else{
@@ -95,6 +108,51 @@ class HomeActivity : AppCompatActivity() {
             }
             else -> {
                 // silently ignore other permission requests
+            }
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        when(requestCode) {
+            MY_REQUEST_LOCATION_SETTINGS -> {
+                if (resultCode == Activity.RESULT_OK){
+                    Log.d("REE", "All location settings granted from dialog")
+                }
+                else {
+                    Log.e("REE", "Failed to request location settings.  resultCode = $resultCode")
+                }
+            }
+        }
+    }
+
+    private fun requestLocationSettings() {
+        val locationRequest = LocationRequest.create()!!.apply {
+            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        }
+
+        var builder = LocationSettingsRequest.Builder()
+            .addLocationRequest(locationRequest)
+
+        var settingsClient = LocationServices.getSettingsClient(this@HomeActivity)
+        val checkSettingsTask = settingsClient.checkLocationSettings(builder.build())
+
+        checkSettingsTask.addOnSuccessListener {
+            Log.d("REE", "All location settings are satisfied :)")
+        }
+
+        checkSettingsTask.addOnFailureListener { exception ->
+            Log.d("REE", "Not all location settings are satisfied, creating dialog to ask user for settings")
+            if(exception is ResolvableApiException) {
+                // Prompt user with a dialog for location
+
+                try {
+                    exception.startResolutionForResult(
+                        this@HomeActivity,
+                        MY_REQUEST_LOCATION_SETTINGS
+                    )
+                } catch (sendEx : IntentSender.SendIntentException){
+                    // Ignore error
+                }
             }
         }
     }

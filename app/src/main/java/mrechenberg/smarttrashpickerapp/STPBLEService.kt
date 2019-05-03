@@ -13,6 +13,8 @@ import android.os.IBinder
 import android.support.annotation.RequiresApi
 import android.support.v4.app.NotificationCompat
 import android.util.Log
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 
 /**
  * Foreground service that creates and maintains a BLE connection
@@ -27,6 +29,8 @@ class STPBLEService : Service() {
     // Have a handle to the BluetoothGatt so we can free resources
     //    when this Service is destroyed
     var bluetoothGatt : BluetoothGatt? = null
+
+    lateinit var fusedLocationClient : FusedLocationProviderClient
 
     // ID for foreground notification
     val ONGOING_NOTIFICATION_ID = 1
@@ -59,6 +63,11 @@ class STPBLEService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 
+        // Get location provider
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this@STPBLEService)
+
+
+        // Setup Bluetooth code
         var bleDevice = intent?.getParcelableExtra<BluetoothDevice>(STP_BLE_DEVICE_INTENT_KEY)
 
 
@@ -111,10 +120,25 @@ class STPBLEService : Service() {
                 gatt?.writeDescriptor(cccdDescriptor)
             }
 
+            // Get the user's current location when the Pi sends us an indication
             override fun onCharacteristicChanged(gatt: BluetoothGatt?, characteristic: BluetoothGattCharacteristic?) {
-                // TODO: when this is called, get current location and store it in SQLite DB (Room API?)
                 var x = characteristic?.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0)
                 Log.d("REE", "onCharacteristicChanged was called, received value $x")
+                Log.d("REE", "Requesting user's current location")
+
+                try {
+                    var lastLocationTask = fusedLocationClient.lastLocation
+                    lastLocationTask.addOnSuccessListener {location ->
+                        val latitude = location.latitude
+                        val longitude = location.longitude
+                        Log.d("REE", "Determined user's current location as ($latitude, $longitude)")
+
+                        // TODO: store this in SQLite DB (perhaps using Room library again)
+                    }
+                } catch (securityException : SecurityException) {
+                    Log.e("REE", "User has refused permissions for determining location")
+                }
+
             }
         }
 
