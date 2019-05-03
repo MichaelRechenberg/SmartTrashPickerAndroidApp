@@ -12,7 +12,7 @@
     <string name="blue_address_default_text">NO BLUETOOTH ADDRESS FOUND</string>
     <string name="ble_discovered_devices_header_text">Select your picker from the devices below</string>
     <string name="stp_ble_notification_content_title">Trash Picker Paired</string>
-    <string name="stp_ble_notification_content_text_prefix">Currently paired to picker with Bluetooth address</string>
+    <string name="stp_ble_notification_content_text_prefix">Number of trash picks:</string>
     <string name="active_ble_connection_header_text">Paired With Trash Picker!</string>
     <string name="active_ble_connection_help_text">Wait a few seconds for the connection to settle, and then when you pick up trash your location will be recorded</string>
     <string name="disconnect_ble_button_text">Disconnect From Picker</string>

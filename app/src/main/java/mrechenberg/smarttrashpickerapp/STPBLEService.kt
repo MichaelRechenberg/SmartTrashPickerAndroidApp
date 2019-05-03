@@ -12,6 +12,7 @@ import android.os.Build
 import android.os.IBinder
 import android.support.annotation.RequiresApi
 import android.support.v4.app.NotificationCompat
+import android.support.v4.app.NotificationManagerCompat
 import android.util.Log
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
@@ -34,6 +35,10 @@ class STPBLEService : Service() {
 
     // ID for foreground notification
     val ONGOING_NOTIFICATION_ID = 1
+
+    // Keep track of the amount of trash picked up while this
+    //   Service is alive
+    var numTrashPickedUp = 0
 
     // Identifiers for notification channels (for Oreo and upwards)
     val NOTIFICATION_CHANNEL_STR_ID = "stp-notification-channel"
@@ -120,13 +125,33 @@ class STPBLEService : Service() {
                 gatt?.writeDescriptor(cccdDescriptor)
             }
 
-            // Get the user's current location when the Pi sends us an indication
+            /**
+             *  When the Pi sends the app an indication, that means that the user picked up trash
+             *
+             *  When that happens, we request the user's current location and update the notification
+             *      with the number of trash picked up
+             */
             override fun onCharacteristicChanged(gatt: BluetoothGatt?, characteristic: BluetoothGattCharacteristic?) {
+                numTrashPickedUp++
                 var x = characteristic?.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8, 0)
                 Log.d("REE", "onCharacteristicChanged was called, received value $x")
-                Log.d("REE", "Requesting user's current location")
+
+                // Update foreground service notification with incremented trash count
+                var notificationManager = NotificationManagerCompat.from(this@STPBLEService)
+
+                var notificationBuilder = createNotificationBuilder()
+                notificationBuilder.setContentText("${getString(R.string.stp_ble_notification_content_text_prefix)} $numTrashPickedUp")
+                var updatedNotification = notificationBuilder.build()
+
+
+                notificationManager.notify(
+                    ONGOING_NOTIFICATION_ID,
+                    updatedNotification
+                )
+
 
                 try {
+                    Log.d("REE", "Requesting user's location")
                     var lastLocationTask = fusedLocationClient.lastLocation
                     lastLocationTask.addOnSuccessListener {location ->
                         val latitude = location.latitude
@@ -162,28 +187,9 @@ class STPBLEService : Service() {
 
         // Create notification so this service can run as a Foreground Service
 
-        // Make notification channel if this is a newer phone
-        // https://stackoverflow.com/questions/47531742/startforeground-fail-after-upgrade-to-android-8-1/47634345
-        val channelId =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
-                createNotificationChannel()
-                NOTIFICATION_CHANNEL_STR_ID
-            }
-            else {
-                ""
-            }
+        var notificationBuilder = createNotificationBuilder()
+        var notification = notificationBuilder.build()
 
-        val pendingIntent : PendingIntent =
-            Intent(this@STPBLEService, BLEConnActiveActivity::class.java).let {
-                    notificationIntent -> PendingIntent.getActivity(this@STPBLEService, 0, notificationIntent, 0)
-            }
-
-        val notification : Notification = NotificationCompat.Builder(this@STPBLEService, channelId)
-            .setContentTitle(getText(R.string.stp_ble_notification_content_title))
-            .setContentText("${getText(R.string.stp_ble_notification_content_text_prefix)} ${bleDevice?.address})")
-            .setSmallIcon(R.drawable.ic_launcher_foreground)
-            .setContentIntent(pendingIntent)
-            .build()
 
         startForeground(ONGOING_NOTIFICATION_ID, notification)
 
@@ -202,6 +208,32 @@ class STPBLEService : Service() {
         channel.lockscreenVisibility = Notification.VISIBILITY_PUBLIC
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.createNotificationChannel(channel)
+    }
+
+    private fun createNotificationBuilder() : NotificationCompat.Builder {
+        // Make notification channel if this is a newer phone
+        // https://stackoverflow.com/questions/47531742/startforeground-fail-after-upgrade-to-android-8-1/47634345
+        val channelId =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+                createNotificationChannel()
+                NOTIFICATION_CHANNEL_STR_ID
+            }
+            else {
+                ""
+            }
+
+        val pendingIntent : PendingIntent =
+            Intent(this@STPBLEService, BLEConnActiveActivity::class.java).let {
+                    notificationIntent -> PendingIntent.getActivity(this@STPBLEService, 0, notificationIntent, 0)
+            }
+
+        val notificationBuilder = NotificationCompat.Builder(this@STPBLEService, channelId)
+            .setContentTitle(getText(R.string.stp_ble_notification_content_title))
+            .setContentText("${getText(R.string.stp_ble_notification_content_text_prefix)} 0")
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentIntent(pendingIntent)
+
+        return notificationBuilder
     }
 
     override fun onDestroy() {
