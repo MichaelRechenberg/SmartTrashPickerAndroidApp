@@ -1,21 +1,25 @@
 package mrechenberg.smarttrashpickerapp
 
 import android.app.*
-import java.util.UUID
 import android.bluetooth.*
 import android.bluetooth.BluetoothDevice.TRANSPORT_LE
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
+import android.os.AsyncTask
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
-import android.support.annotation.RequiresApi
-import android.support.v4.app.NotificationCompat
-import android.support.v4.app.NotificationManagerCompat
 import android.util.Log
+import androidx.annotation.RequiresApi
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import mrechenberg.smarttrashpickerapp.database.TrashDatabase
+import mrechenberg.smarttrashpickerapp.database.TrashPickingSession
+import mrechenberg.smarttrashpickerapp.database.TrashPickup
+import java.util.*
 
 /**
  * Foreground service that creates and maintains a BLE connection
@@ -30,10 +34,17 @@ class STPBLEService : Service() {
     // The username of the user, taken from Intent
     lateinit var username : String
 
+    // Session ID of this TrashPickupSession (once we INSERTed a new TrashPickupSession record)
+    var trashPickupSessionId : Long? = null
+
     // Have a handle to the BluetoothGatt so we can free resources
     //    when this Service is destroyed
     var bluetoothGatt : BluetoothGatt? = null
 
+    // Trash database to record TrashPickups and TrashPickingSessions
+    lateinit var trashDatabase : TrashDatabase
+
+    // Location client
     lateinit var fusedLocationClient : FusedLocationProviderClient
 
     // ID for foreground notification
@@ -71,11 +82,27 @@ class STPBLEService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 
+        // Get a handle on the database
+        trashDatabase = TrashDatabase.getDatabase(this@STPBLEService.application)
+
         // Get username from intent
         username = intent!!.getStringExtra(HomeActivity.USERNAME_INTENT_KEY)
 
         // Get location provider
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this@STPBLEService)
+
+
+        // Insert new TrashPickupSession record and then init the trashPickupSessionId of this Service,
+        //   blocking until it has finished
+        var insertAsyncTaskParams = InsertNewTrashPickingSessionAsyncTaskParams(
+            username = username,
+            trashDatabase = trashDatabase
+        )
+        var insertTask = InsertNewTrashPickingSessionAsyncTask().execute(insertAsyncTaskParams)
+        var newSessionId = insertTask.get()
+        trashPickupSessionId = newSessionId
+
+
 
 
         // Setup Bluetooth code
@@ -164,7 +191,21 @@ class STPBLEService : Service() {
                         val longitude = location.longitude
                         Log.d("REE", "Determined current location of $username as ($latitude, $longitude)")
 
-                        // TODO: store this in SQLite DB (perhaps using Room library again), passing in username
+                        // Kick off an AsyncTask to insert a new TrashPickup record (fire and forget)
+                        var trashPickup = TrashPickup(
+                            username = username,
+                            latitude = latitude,
+                            longitude = longitude,
+                            sessionId = trashPickupSessionId as Long,
+                            collectedDate = Calendar.getInstance().time
+                        )
+
+                        var params = InsertNewTrashPickupAsyncTaskParams(
+                            trashDatabase = trashDatabase,
+                            trashPickup = trashPickup
+                        )
+
+                        InsertNewTrashPickupAsyncTask().execute(params)
                     }
                 } catch (securityException : SecurityException) {
                     Log.e("REE", "User has refused permissions for determining location")
@@ -247,6 +288,59 @@ class STPBLEService : Service() {
         bluetoothGatt?.close()
         bluetoothGatt?.disconnect()
         bluetoothGatt = null
+    }
+
+
+
+
+
+    data class InsertNewTrashPickingSessionAsyncTaskParams(
+        val trashDatabase : TrashDatabase,
+        val username : String
+    )
+
+    // AsyncTask to insert a new TrashPickingSession record into the database
+    // After the record is inserted, the session ID is stored in a field of STPBLEService
+    class InsertNewTrashPickingSessionAsyncTask : AsyncTask<InsertNewTrashPickingSessionAsyncTaskParams, Void, Long?>() {
+        override fun doInBackground(vararg params: InsertNewTrashPickingSessionAsyncTaskParams?): Long? {
+            var param = params[0]
+
+            var trashPickingSessionDAO = param?.trashDatabase?.getTrashPickingSessionDAO()
+
+            var trashPickupSession = TrashPickingSession(
+                username = param!!.username,
+                startTime = Calendar.getInstance().time,
+                endTime = null
+            )
+
+            var sessionId = trashPickingSessionDAO?.insert(trashPickupSession)
+
+            return sessionId
+        }
+    }
+
+    data class InsertNewTrashPickupAsyncTaskParams(
+        val trashDatabase: TrashDatabase,
+        val trashPickup : TrashPickup
+    )
+
+    // AsyncTask to insert a new TrashPickup record into the database
+    // Returns the id of the newly added TrashPickup
+    class InsertNewTrashPickupAsyncTask : AsyncTask<InsertNewTrashPickupAsyncTaskParams, Void, Long?>() {
+        override fun doInBackground(vararg params: InsertNewTrashPickupAsyncTaskParams?): Long? {
+            var param = params[0]
+
+            var trashPickupDAO = param?.trashDatabase?.getTrashPickupDAO()
+
+            var trashPickup = param!!.trashPickup
+
+            var trashPickupId =  trashPickupDAO?.insert(trashPickup)
+
+            // var allTrashCount = trashPickupDAO?.getAllPickupsOfSession(trashPickup.sessionId)?.count()
+            // Log.d("REE", "We have picked up $allTrashCount trashes for session ${trashPickup.sessionId}")
+
+            return trashPickupId
+        }
     }
 }
 

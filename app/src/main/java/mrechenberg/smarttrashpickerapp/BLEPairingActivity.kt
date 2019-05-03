@@ -9,10 +9,10 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.ParcelUuid
-import android.support.v7.app.AppCompatActivity
-import android.support.v7.widget.LinearLayoutManager
 import android.util.Log
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
 import kotlinx.android.synthetic.main.activity_blepairing.*
 import mrechenberg.smarttrashpickerapp.STPBLEService.Companion.SMART_TRASH_PICKER_SERVICE_UUID_STR
 
@@ -146,7 +146,7 @@ class BLEPairingActivity : AppCompatActivity() {
         var scanStatusLayout = ble_pairing_scan_control_layout
         var scanStatusTextView = ble_start_scan_textview
 
-        scanStatusLayout.setOnClickListener {v ->
+        scanStatusLayout.setOnClickListener {_ ->
             if (isActivelyScanning){
                 isActivelyScanning = !isActivelyScanning
                 scanStatusTextView.setText(R.string.ble_start_scan_text_not_scanning)
