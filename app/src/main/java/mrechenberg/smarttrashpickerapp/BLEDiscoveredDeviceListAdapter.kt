@@ -13,7 +13,10 @@ import android.widget.Toast
 /**
  * Adapter for displaying discovered Bluetooth devices on the pairing screen
  */
-class BLEDiscoveredDeviceListAdapter(val mContext: Context, val mDiscoveredDevices: MutableList<BLEDiscoveredDevice>) :
+class BLEDiscoveredDeviceListAdapter(
+    val mContext: Context,
+    val mDiscoveredDevices: MutableList<BLEDiscoveredDevice>,
+    val mUsername : String) :
     RecyclerView.Adapter<BLEDiscoveredDeviceListAdapter.BLEDiscoveredDeviceViewHolder>() {
 
     // Provide a reference to the views for each data item
@@ -58,6 +61,7 @@ class BLEDiscoveredDeviceListAdapter(val mContext: Context, val mDiscoveredDevic
 
             var stpBleIntent = Intent(this.mContext, STPBLEService::class.java)
             stpBleIntent.putExtra(STPBLEService.STP_BLE_DEVICE_INTENT_KEY, underlyingBLEDevice)
+            stpBleIntent.putExtra(HomeActivity.USERNAME_INTENT_KEY, mUsername)
             this.mContext.startService(stpBleIntent)
 
 

@@ -27,6 +27,9 @@ import com.google.android.gms.location.LocationServices
  */
 class STPBLEService : Service() {
 
+    // The username of the user, taken from Intent
+    lateinit var username : String
+
     // Have a handle to the BluetoothGatt so we can free resources
     //    when this Service is destroyed
     var bluetoothGatt : BluetoothGatt? = null
@@ -67,6 +70,9 @@ class STPBLEService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+
+        // Get username from intent
+        username = intent!!.getStringExtra(HomeActivity.USERNAME_INTENT_KEY)
 
         // Get location provider
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this@STPBLEService)
@@ -156,9 +162,9 @@ class STPBLEService : Service() {
                     lastLocationTask.addOnSuccessListener {location ->
                         val latitude = location.latitude
                         val longitude = location.longitude
-                        Log.d("REE", "Determined user's current location as ($latitude, $longitude)")
+                        Log.d("REE", "Determined current location of $username as ($latitude, $longitude)")
 
-                        // TODO: store this in SQLite DB (perhaps using Room library again)
+                        // TODO: store this in SQLite DB (perhaps using Room library again), passing in username
                     }
                 } catch (securityException : SecurityException) {
                     Log.e("REE", "User has refused permissions for determining location")

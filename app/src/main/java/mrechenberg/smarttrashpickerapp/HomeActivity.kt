@@ -30,6 +30,10 @@ class HomeActivity : AppCompatActivity() {
     // Used when requesting location settings
     private val MY_REQUEST_LOCATION_SETTINGS = 2
 
+    companion object {
+        // The Intent key under which we will place the username the user typed in
+        val USERNAME_INTENT_KEY = "username"
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,7 +71,7 @@ class HomeActivity : AppCompatActivity() {
 
             var blePairingActivityIntent = Intent(this@HomeActivity, BLEPairingActivity::class.java)
             var typedUsername = usernameEditText.text.toString()
-            blePairingActivityIntent.putExtra("username", typedUsername)
+            blePairingActivityIntent.putExtra(USERNAME_INTENT_KEY, typedUsername)
 
             startActivity(blePairingActivityIntent)
         }

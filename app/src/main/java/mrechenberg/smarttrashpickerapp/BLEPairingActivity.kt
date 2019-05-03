@@ -24,6 +24,9 @@ import mrechenberg.smarttrashpickerapp.STPBLEService.Companion.SMART_TRASH_PICKE
  */
 class BLEPairingActivity : AppCompatActivity() {
 
+    // The username of the user, taken from Intent
+    lateinit var username : String
+
     // Flag for Bluetooth intent
     val REQUEST_ENABLE_BT = 1
 
@@ -57,6 +60,9 @@ class BLEPairingActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_blepairing)
 
+        // Get username from intent
+        username = intent.getStringExtra(HomeActivity.USERNAME_INTENT_KEY)
+
         // Request that the user enable Bluetooth, if it isn't turned on already
         bluetoothAdapter?.takeIf { !it.isEnabled }?.apply {
             val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
@@ -70,7 +76,8 @@ class BLEPairingActivity : AppCompatActivity() {
 
         var discoveredDevicesAdapter = BLEDiscoveredDeviceListAdapter(
             this@BLEPairingActivity,
-            listOfDiscoveredBLEDevices
+            listOfDiscoveredBLEDevices,
+            username
         )
         discoveredDevicesRecyclerView.adapter = discoveredDevicesAdapter
 
