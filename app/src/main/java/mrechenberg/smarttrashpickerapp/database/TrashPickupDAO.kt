@@ -15,4 +15,7 @@ interface TrashPickupDAO {
 
     @Query("SELECT COUNT(*) FROM TrashPickup WHERE session_id = :sessionId")
     fun getPickupCountOfSession(sessionId: Long) : Int
+
+    @Query("SELECT * FROM TrashPickup WHERE username = :username")
+    fun getAllPickupsOfUser(username: String) : List<TrashPickup>
 }

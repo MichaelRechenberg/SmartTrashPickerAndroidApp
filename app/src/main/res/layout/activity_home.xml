@@ -6,7 +6,7 @@
         xmlns:app="http://schemas.android.com/apk/res-auto"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".HomeActivity">
+        tools:context=".HomeActivity" android:id="@+id/constraintLayout2">
 
     <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
@@ -54,7 +54,7 @@
                 app:layout_constraintEnd_toEndOf="parent" android:layout_marginStart="8dp"
                 app:layout_constraintStart_toStartOf="parent" android:hint="@string/enter_username_hint_text"
                 app:layout_constraintHorizontal_bias="0.0" android:layout_marginBottom="64dp"
-                app:layout_constraintBottom_toTopOf="@+id/welcome_screen_login_button"/>
+                app:layout_constraintBottom_toTopOf="@+id/export_data_button"/>
         <Button
                 android:layout_width="0dp"
                 android:layout_height="wrap_content" android:id="@+id/welcome_screen_login_button"
@@ -63,5 +63,13 @@
                 app:layout_constraintBottom_toBottomOf="parent" android:layout_marginStart="8dp"
                 app:layout_constraintStart_toStartOf="parent" android:visibility="visible"
                 android:text="@string/welcome_screen_login_button_text" android:enabled="false"/>
+        <Button
+                android:text="@string/export_data_button_text"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content" android:id="@+id/export_data_button"
+                app:layout_constraintEnd_toEndOf="parent" android:layout_marginEnd="8dp"
+                app:layout_constraintStart_toStartOf="parent" android:layout_marginStart="8dp"
+                android:layout_marginBottom="24dp"
+                app:layout_constraintBottom_toTopOf="@+id/welcome_screen_login_button" android:enabled="false"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

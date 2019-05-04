@@ -40,9 +40,10 @@ class HomeActivity : AppCompatActivity() {
         setContentView(R.layout.activity_home)
 
         var loginButton = welcome_screen_login_button
+        var exportDataButton = export_data_button
         var usernameEditText = welcome_screen_username_edittext
 
-        // Enable the login button only if the user has entered some username
+        // Enable the BLE pairing and data export button only if the user has entered some username
         usernameEditText.addTextChangedListener(object : TextWatcher {
 
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
@@ -53,9 +54,11 @@ class HomeActivity : AppCompatActivity() {
                 if (s != null){
                    if (s!!.isNotEmpty()){
                       loginButton.isEnabled = true
+                      exportDataButton.isEnabled = true
                    }
                    else {
                       loginButton.isEnabled = false
+                      exportDataButton.isEnabled = false
                    }
                 }
 
@@ -64,6 +67,15 @@ class HomeActivity : AppCompatActivity() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
             }
         })
+
+
+        // When someone clicks the "export user data" button, start the data export activity
+        exportDataButton.setOnClickListener { _ ->
+            var exportDataIntent = Intent(this@HomeActivity, ExportTrashDataActivity::class.java)
+            var typedUsername = usernameEditText.text.toString()
+            exportDataIntent.putExtra(USERNAME_INTENT_KEY, typedUsername)
+            startActivity(exportDataIntent)
+        }
 
 
         // When someone clicks the "login" button, start the BLE pairing activity

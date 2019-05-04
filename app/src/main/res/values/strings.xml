@@ -14,6 +14,18 @@
     <string name="stp_ble_notification_content_title">Trash Picker Paired</string>
     <string name="stp_ble_notification_content_text_prefix">Number of trash picks:</string>
     <string name="active_ble_connection_header_text">Paired With Trash Picker!</string>
-    <string name="active_ble_connection_help_text">Wait a few seconds for the connection to settle, and then when you pick up trash your location will be recorded</string>
+    <string name="active_ble_connection_help_text">Wait a few seconds for the connection to settle, and then when you
+        pick up trash your location will be recorded
+    </string>
     <string name="disconnect_ble_button_text">Disconnect From Picker</string>
+    <string name="export_data_button_text">Export Your Trash Collection Data</string>
+    <string name="export_data_header_text">Export Trash Data</string>
+    <string name="export_data_instrutions_text">To export your trash collection data, we\'ll make a JSON request to a
+        server. The payload will contain a JSON array of your trash collection data. First, you\'ll need to provide the
+        address (and port) of the host to send the data to. Then hit the Export
+        button
+    </string>
+    <string name="server_url_header_text">Server Host Address</string>
+    <string name="export_button_text_2">Export</string>
+    <string name="server_url_hint_text">Enter an address like 192.168.0.101:8080</string>
 </resources>

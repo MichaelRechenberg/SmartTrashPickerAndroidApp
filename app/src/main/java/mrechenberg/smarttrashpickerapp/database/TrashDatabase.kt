@@ -33,6 +33,8 @@ abstract class TrashDatabase : RoomDatabase() {
                                 context.applicationContext,
                                 TrashDatabase::class.java,
                             "trash_database")
+                                // For demo purposes, I will query on the main thread
+                            .allowMainThreadQueries()
                             .build()
                 }
             }

@@ -9,6 +9,11 @@
             android:name="android.permission.ACCESS_FINE_LOCATION"/> <!-- We require BLE, so make BLE capability mandatory -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
 
+    <!-- For export purposes, we require internet access.  We will make cleartext HTTP requests
+        to servers within a private home network (e.g. 192.168.0.9/24), and we will
+        configure this in network_security_config.xml -->
+    <uses-permission android:name="android.permission.INTERNET"/>
+
     <uses-feature
             android:name="android.hardware.bluetooth_le"
             android:required="true"/>
@@ -19,7 +24,10 @@
             android:label="@string/app_name"
             android:roundIcon="@mipmap/ic_launcher_round"
             android:supportsRtl="true"
+            android:networkSecurityConfig="@xml/network_security_config"
             android:theme="@style/AppTheme">
+        <activity android:name=".ExportTrashDataActivity">
+        </activity>
         <activity android:name=".BLEConnActiveActivity">
         </activity>
 
